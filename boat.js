@@ -107,12 +107,11 @@ client.on('messageCreate', message => {
             }
             break;
 
-        case "title": //For 2023, this will use the prior month as the title. For 2024, it will be the current day.
+        case "title": //For 2023, this will use the date range of the prior week. For 2024, it will be the current day.
             if (message.member.roles.cache.has("1079163461176660119") || message.member.roles.cache.has("1074521629994004521")) {
                 message.react('💬');
                 const d = new Date();
-                const monthnames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-                BoatChannel.send(`**${monthnames[d.getMonth() - 1]} 2023**\n\n😍 +2 points\n👍  +1 points\n🤷 0 points\n👎 -1 points\n🤢 -2 points`);
+                BoatChannel.send(`**${new Date(d.getFullYear(), d.getMonth(), d.getDate() - 7).toLocaleDateString('en-us')} - ${new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1).toLocaleDateString('en-us')}**\n\n😍 +2 points\n👍  +1 points\n🤷 0 points\n👎 -1 points\n🤢 -2 points`);
                 message.react('✅');
             } else {
                 message.react('❌');
@@ -125,20 +124,7 @@ client.on('messageCreate', message => {
                 message.react('💬');
                 const d = new Date();
                 const monthnames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-                BoatChannel.send(`<@&1074521691222454374> Voting ends on ${monthnames[d.getMonth()]} ${d.getDate() + 7}!`);
-                message.react('✅');
-            } else {
-                message.react('❌');
-                message.reply(`You don't have permission to run that command!`);
-            }
-            break;
-
-        case "reminder": //For 2023, this will remind users to vote for the ongoing BOAT. For 2024, it will probably be for last week's BOAT.
-            if (message.member.roles.cache.has("1079163461176660119") || message.member.roles.cache.has("1074521629994004521")) {
-                message.react('💬');
-                const d = new Date();
-                const monthnames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-                BoatChannel.send(`Last day to vote for **${monthnames[d.getMonth() - 1]} 2023**!`);
+                BoatChannel.send(`Voting for this week ends <t:${Math.floor(new Date(d.getFullYear(), d.getMonth(), d.getDate() + 35).getTime() / 1000)}:R>!\n\n<@&1074521691222454374>`);
                 message.react('✅');
             } else {
                 message.react('❌');
