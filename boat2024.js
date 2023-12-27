@@ -41,7 +41,8 @@ client.on(Events.MessageCreate, async message => {
     if (!message.content.startsWith(prefix) || message.author.bot) return;
     const args = message.content.slice(prefix.length).split(/ +/);
     const command = args.shift().toLowerCase();
-    const BoatChannel = client.channels.cache.get('1074524369918894111');
+    const BoatChannel = client.channels.cache.get('1074524369918894111'); //actual channel
+    //const BoatChannel = client.channels.cache.get('1185440485343510679'); //testing channel
     switch (command) {
         case "boat":
             if (message.member.roles.cache.has("1074521629994004521")) {
@@ -150,7 +151,7 @@ client.on(Events.MessageCreate, async message => {
                 } else {
                     message.react('💬');
                     const d = args[0].split('/');
-                    BoatChannel.send(`Voting for this day ends <t:${Math.floor(new Date(2023, d[0], d[1]).getTime() / 1000)}:R>!\n\n<@&1074521691222454374>`);
+                    BoatChannel.send(`Voting for this day ends <t:${Math.floor(new Date(2024, d[0]-1, d[1]).getTime() / 1000)}:R>!\n\n<@&1074521691222454374>`);
                     message.react('✅');
                 }
             } else {
@@ -175,9 +176,9 @@ client.on(Events.MessageCreate, async message => {
                             await BOAT2024Sheet.addRow([
                                 `=ROW(A${rowCount})-1`,
                                 `${BoatMsg.content.split(' - ').slice(0,-1).join(' - ')}`, //artists, this was coded to deal with Mista - T - Illusions
-                                `${BoatMsg.content.split(' - ')[-1].split(' (*')[0]}`, //track
+                                `${BoatMsg.content.split(' - ').at(-1).split(' *(')[0]}`, //track
                                 ``, //genre
-                                `${BoatMsg.content.split(' - ')[-1].split(' (*')[1].substring(0,4)}-${args[0].replace('/','-')}`, //date
+                                `${BoatMsg.content.split(' - ').at(-1).split(' *(')[1].substring(0,4)}-${args[0].replace('/','-')}`, //date
                                 ``, //brand
                                 `=(2*H${rowCount}+I${rowCount}-K${rowCount}-2*L${rowCount})/M${rowCount}`, //score
                                 `${BoatMsgReactions.get('😍').count-1}`,
@@ -193,6 +194,7 @@ client.on(Events.MessageCreate, async message => {
                         }
                     })
                     .catch(async error => {
+                        console.log(error);
                         await message.reply(`Couldn't find message with ID ${msgID}!`);
                     });
                 }
