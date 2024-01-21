@@ -11,14 +11,21 @@ const Token = process.env.DISCORD_TOKEN;
 const spreadsheetAPIKey = process.env.SPREADSHEET_APIKEY;
 
 //Load spreadsheet
+const { JWT } = require('google-auth-library');
 const { GoogleSpreadsheet } = require("google-spreadsheet");
-const doc = new GoogleSpreadsheet('1uZzD5eafjzjccRwR_Hk0EOeBSpY4Sbikpmj1pEbbFWY');
+const SCOPES = [
+    'https://www.googleapis.com/auth/spreadsheets',
+    'https://www.googleapis.com/auth/drive.file',
+];
+const jwt = new JWT({
+    email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+    key: process.env.GOOGLE_PRIVATE_KEY,
+    scopes: SCOPES,
+});
+
+const doc = new GoogleSpreadsheet('1uZzD5eafjzjccRwR_Hk0EOeBSpY4Sbikpmj1pEbbFWY', jwt);
 var BOAT2024Sheet;
 async function loadDoc() {
-    await doc.useServiceAccountAuth({
-        client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-        private_key: process.env.GOOGLE_PRIVATE_KEY
-    });
     await doc.loadInfo();
     console.log(`Loaded doc ${doc.title}!`);
     BOAT2024Sheet = doc.sheetsById['245152338'];
@@ -41,8 +48,8 @@ client.on(Events.MessageCreate, async message => {
     if (!message.content.startsWith(prefix) || message.author.bot) return;
     const args = message.content.slice(prefix.length).split(/ +/);
     const command = args.shift().toLowerCase();
-    const BoatChannel = client.channels.cache.get('1074524369918894111'); //actual channel
-    //const BoatChannel = client.channels.cache.get('1185440485343510679'); //testing channel
+    //const BoatChannel = client.channels.cache.get('1074524369918894111'); //actual channel
+    const BoatChannel = client.channels.cache.get('1185440485343510679'); //testing channel
     switch (command) {
         case "boat":
             if (message.member.roles.cache.has("1074521629994004521")) {
@@ -167,29 +174,57 @@ client.on(Events.MessageCreate, async message => {
                 for (msgID of args.slice(1)) {
                     await BoatChannel.messages.fetch(msgID)
                     .then(async BoatMsg => {
-                        var BoatMsgReactions = await BoatMsg.reactions.cache;
+                        var BoatMsgReactions = BoatMsg.reactions.cache;
+
+                        // BoatMsgReactions.users.fetch()
                         if (BoatMsgReactions.has('✅')) {
                             await message.reply(`Message with ID ${msgID} has already been updated!`);
-                        }
-                        else {
+                        } else {
+                            // Check for voter fraud
+                            const rxns = ['😍','👍','🤷','👎','🤢']
+                            const rxnUsers = await Promise.all(rxns.map(async (rxn) => BoatMsgReactions.get(rxn).users.fetch()))
+                            const userIdToUsers = {}
+                            rxnUsers.forEach((users) => {
+                                for(let u of users.values()){
+                                    userIdToUsers[u.id] = u
+                                }
+                            })
+
+                            const rxnUserIds = rxnUsers.map((users) => Array.from(users.keys()))
+                            const userIdToRxns = {}
+                            rxnUserIds.forEach((ids, i) => {
+                                ids.forEach((id) => {
+                                    if(!userIdToRxns[id]){
+                                        userIdToRxns[id] = []
+                                    }
+                                    userIdToRxns[id].push(rxns[i])
+                                })
+                            })
+                            const rxnVotes = rxns.map((rxn, i) => rxnUserIds[i].filter(id => userIdToRxns[id].length <= 1).length)
+                            const violators = Object.values(userIdToUsers).filter(u => userIdToRxns[u.id].length > 1 && u.globalName)
+                            
+                            if(violators.length > 0){
+                                const violatorMsg = violators.map(vio => `${vio.username} (${vio.id})`).join('\n')
+                                await message.reply(`⚠️ **The following users have voted multiple times:**\n${violatorMsg}`)
+                            }
+
+                            // Update sheet
                             rowCount++;
                             await BOAT2024Sheet.addRow([
                                 `=ROW(A${rowCount})-1`,
                                 `${BoatMsg.content.split(' - ').slice(0,-1).join(' - ')}`, //artists, this was coded to deal with Mista - T - Illusions
                                 `${BoatMsg.content.split(' - ').at(-1).split(' *(')[0]}`, //track
-                                ``, //genre
+                                `?`, //genre
                                 `${BoatMsg.content.split(' - ').at(-1).split(' *(')[1].substring(0,4)}-${args[0].replace('/','-')}`, //date
-                                ``, //brand
+                                `?`, //brand
                                 `=(2*H${rowCount}+I${rowCount}-K${rowCount}-2*L${rowCount})/M${rowCount}`, //score
-                                `${BoatMsgReactions.get('😍').count-1}`,
-                                `${BoatMsgReactions.get('👍').count-1}`,
-                                `${BoatMsgReactions.get('🤷').count-1}`,
-                                `${BoatMsgReactions.get('👎').count-1}`,
-                                `${BoatMsgReactions.get('🤢').count-1}`,
+                                ...rxnVotes.map(v => `${v}`),
                                 `=SUM(H${rowCount}:L${rowCount})`, //voters
                                 `=(H${rowCount}*(2-G${rowCount})^2+I${rowCount}*(1-G${rowCount})^2+J${rowCount}*(G${rowCount})^2+K${rowCount}*(-1-G${rowCount})^2+L${rowCount}*(-2-G${rowCount})^2)/M${rowCount}` //variance
                             ]
                             , {raw: false, insert: true});
+                            // id, name, +2, +1,.. -2, Song 1, Song 2 ... 
+                            // .id, .name, SUMIF(Song1Colum:SongNColum, If == 'heart'), ..., -2, Song1 Reaction, 
                             await BoatMsg.react('✅');
                         }
                     })
