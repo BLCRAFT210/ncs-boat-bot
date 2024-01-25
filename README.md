@@ -6,7 +6,7 @@ to do:
 join server: https://discord.gg/m8tXa73vH9
 
 ## Todo
-- [ ] Add edit command
+- [x] Add edit command
 - [x] Add results command for 2023 BOAT
 - [ ] Replace variance with "controversy score"
 - [x] Check for voter fraud

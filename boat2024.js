@@ -48,8 +48,8 @@ client.on(Events.MessageCreate, async message => {
     if (!message.content.startsWith(prefix) || message.author.bot) return;
     const args = message.content.slice(prefix.length).split(/ +/);
     const command = args.shift().toLowerCase();
-    //const BoatChannel = client.channels.cache.get('1074524369918894111'); //actual channel
-    const BoatChannel = client.channels.cache.get('1185440485343510679'); //testing channel
+    const BoatChannel = client.channels.cache.get('1074524369918894111'); //actual channel
+    //const BoatChannel = client.channels.cache.get('1185440485343510679'); //testing channel
     switch (command) {
         case "boat":
             if (message.member.roles.cache.has("1074521629994004521")) {
@@ -234,6 +234,31 @@ client.on(Events.MessageCreate, async message => {
                     });
                 }
                 message.react('✅');
+            } else {
+                message.react('❌');
+                message.reply(`You don't have permission to run that command!`);
+            }
+            break;
+        
+        case "edit": // edit a Discord message from the bot
+            if (message.member.roles.cache.has("1074521629994004521")) {
+                if (args.length < 2)
+                {
+                    message.react('⚠️');
+                    message.reply("Please provide a message ID and a new message.");
+                } else {
+                    message.react('💬');
+                    await BoatChannel.messages.fetch(args[0])
+                    .then(async BoatMsg => {
+                        const ArgJoin = args.myJoin(" ", 1);
+                        await BoatMsg.edit(ArgJoin);
+                        await message.react('✅');
+                    })
+                    .catch(async error => {
+                        console.log(error);
+                        await message.reply(`Couldn't find message with ID ${args[0]}!`);
+                    });
+                }
             } else {
                 message.react('❌');
                 message.reply(`You don't have permission to run that command!`);
