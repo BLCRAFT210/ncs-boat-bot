@@ -1,3 +1,5 @@
+// JS file used for 2023 BOAT. No longer in use, but kept for reference.
+
 const Discord = require('discord.js');
 const { Client, Events, GatewayIntentBits } = require('discord.js');
 const client = new Client({
@@ -11,14 +13,21 @@ const Token = process.env.DISCORD_TOKEN;
 const spreadsheetAPIKey = process.env.SPREADSHEET_APIKEY;
 
 //Load spreadsheet
+const { JWT } = require('google-auth-library');
 const { GoogleSpreadsheet } = require("google-spreadsheet");
-const doc = new GoogleSpreadsheet('1uZzD5eafjzjccRwR_Hk0EOeBSpY4Sbikpmj1pEbbFWY');
+const SCOPES = [
+    'https://www.googleapis.com/auth/spreadsheets',
+    'https://www.googleapis.com/auth/drive.file',
+];
+const jwt = new JWT({
+    email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+    key: process.env.GOOGLE_PRIVATE_KEY,
+    scopes: SCOPES,
+});
+
+const doc = new GoogleSpreadsheet('1uZzD5eafjzjccRwR_Hk0EOeBSpY4Sbikpmj1pEbbFWY', jwt);
 var BOAT2023Sheet;
 async function loadDoc() {
-    await doc.useServiceAccountAuth({
-        client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-        private_key: process.env.GOOGLE_PRIVATE_KEY
-    });
     await doc.loadInfo();
     console.log(`Loaded doc ${doc.title}!`);
     BOAT2023Sheet = doc.sheetsById['656348782'];
@@ -41,7 +50,10 @@ client.on(Events.MessageCreate, async message => {
     if (!message.content.startsWith(prefix) || message.author.bot) return;
     const args = message.content.slice(prefix.length).split(/ +/);
     const command = args.shift().toLowerCase();
-    const BoatChannel = client.channels.cache.get('1074524369918894111');
+    const BoatChannel = client.channels.cache.get('1074524369918894111'); //actual channel
+    //const BoatChannel = client.channels.cache.get('1185440485343510679'); //testing channel
+    const ResultsChannel = client.channels.cache.get('1093917276878671925'); //actual channel
+    //const ResultsChannel = client.channels.cache.get('1185440485343510679'); //testing channel
     switch (command) {
         case "boat":
             if (message.member.roles.cache.has("1074521629994004521")) {
@@ -185,6 +197,24 @@ client.on(Events.MessageCreate, async message => {
                         await message.reply(`Couldn't find message with ID ${msgID}!`);
                     });
                 }
+                message.react('✅');
+            } else {
+                message.react('❌');
+                message.reply(`You don't have permission to run that command!`);
+            }
+            break;
+        
+        case "results":            
+            if (message.member.roles.cache.has("1074521629994004521")) {
+                message.react('💬');
+                ResultsChannel.send(`**BOAT 2023 Results**\n`);
+                var rows = await BOAT2023Sheet.getRows();
+                var i = 0;
+                var interval = setInterval(async function() {
+                    await ResultsChannel.send(`**${i+1}\t${rows[i].get('Artist(s)')} - ${rows[i].get('Song Name')}** *(${rows[i].get('Rating')})*`);
+                    i++;
+                    if (i >= rows.length) clearInterval(interval);
+                }, 1000);
                 message.react('✅');
             } else {
                 message.react('❌');
