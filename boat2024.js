@@ -208,6 +208,15 @@ client.on(Events.MessageCreate, async message => {
                                 await message.reply(`⚠️ **The following users have voted multiple times:**\n${violatorMsg}`)
                             }
 
+                            var controversyTotal = 0;
+                            var controversyCount = 0;
+                            for (let i=0; i<rxnVotes.length; i++) {
+                                for (let j=i; j<rxnVotes.length; j++) {
+                                    controversyTotal += (rxnVotes[i]*rxnVotes[j])*(j-i);
+                                    controversyCount += rxnVotes[i]*rxnVotes[j];
+                                }
+                            }
+                            
                             // Update sheet
                             rowCount++;
                             await BOAT2024Sheet.addRow([
@@ -220,7 +229,7 @@ client.on(Events.MessageCreate, async message => {
                                 `=(2*H${rowCount}+I${rowCount}-K${rowCount}-2*L${rowCount})/M${rowCount}`, //score
                                 ...rxnVotes.map(v => `${v}`),
                                 `=SUM(H${rowCount}:L${rowCount})`, //voters
-                                `=(H${rowCount}*(2-G${rowCount})^2+I${rowCount}*(1-G${rowCount})^2+J${rowCount}*(G${rowCount})^2+K${rowCount}*(-1-G${rowCount})^2+L${rowCount}*(-2-G${rowCount})^2)/M${rowCount}` //variance
+                                `${controversyTotal/controversyCount}` //controversy
                             ]
                             , {raw: false, insert: true});
                             // id, name, +2, +1,.. -2, Song 1, Song 2 ... 
