@@ -226,10 +226,11 @@ client.on(Events.MessageCreate, async message => {
                                 `?`, //genre
                                 `${BoatMsg.content.split(' - ').at(-1).split(' *(')[1].substring(0,4)}-${args[0].replace('/','-')}`, //date
                                 `?`, //brand
-                                `=(2*H${rowCount}+I${rowCount}-K${rowCount}-2*L${rowCount})/M${rowCount}`, //score
+                                `=(N${rowCount}+2)/4`, //percent
                                 ...rxnVotes.map(v => `${v}`),
                                 `=SUM(H${rowCount}:L${rowCount})`, //voters
-                                `${(controversyTotal/controversyCount).toFixed(9)}` //controversy
+                                `=(2*H${rowCount}+I${rowCount}-K${rowCount}-2*L${rowCount})/M${rowCount}`, //score
+                                `${(controversyTotal/controversyCount).toFixed(7)}` //controversy
                             ]
                             , {raw: false, insert: true});
                             // id, name, +2, +1,.. -2, Song 1, Song 2 ... 
