@@ -229,7 +229,7 @@ client.on(Events.MessageCreate, async message => {
                                 `=(2*H${rowCount}+I${rowCount}-K${rowCount}-2*L${rowCount})/M${rowCount}`, //score
                                 ...rxnVotes.map(v => `${v}`),
                                 `=SUM(H${rowCount}:L${rowCount})`, //voters
-                                `${controversyTotal/controversyCount}` //controversy
+                                `${(controversyTotal/controversyCount).toFixed(9)}` //controversy
                             ]
                             , {raw: false, insert: true});
                             // id, name, +2, +1,.. -2, Song 1, Song 2 ... 
