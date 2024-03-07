@@ -33,6 +33,8 @@ async function loadDoc() {
 }
 loadDoc();
 
+const bannedUsers = ['1168649458058268814','873678656814317588','1135715220027883641'];
+
 client.once(Events.ClientReady, () => {
     console.log(`Bot is now online!`);
 });
@@ -200,7 +202,7 @@ client.on(Events.MessageCreate, async message => {
                                     userIdToRxns[id].push(rxns[i])
                                 })
                             })
-                            const rxnVotes = rxns.map((rxn, i) => rxnUserIds[i].filter(id => userIdToRxns[id].length <= 1).length)
+                            const rxnVotes = rxns.map((rxn, i) => rxnUserIds[i].filter(id => !bannedUsers.includes(id) && userIdToRxns[id].length <= 1).length)
                             const violators = Object.values(userIdToUsers).filter(u => userIdToRxns[u.id].length > 1 && u.globalName)
                             
                             if(violators.length > 0){
